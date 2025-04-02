@@ -67,3 +67,26 @@ class CreateMemoTests(TestCase):
         self.assertIn("text", response.data)
         self.assertIn("created_at", response.data)
         self.assertEqual(response.data["text"], data["text"])
+
+class GetMemoTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("memo-list")
+        Memo.objects.create(text="メモ1")
+        Memo.objects.create(text="メモ2")
+
+    def test_get_memo_list(self):
+        # urls.pyに定義したエンドポイントを自動で取得
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_memos(self):
+        response = self.client.get(self.url)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 2)
+
+    def test_include_data(self):
+        response = self.client.get(self.url)
+        texts = [memo["text"] for memo in response.data]
+        self.assertIn("メモ1", texts)
+        self.assertIn("メモ2", texts)
