@@ -93,3 +93,39 @@ class GetMemoTests(TestCase):
         texts = [memo["text"] for memo in response.data]
         self.assertIn("メモ1", texts)
         self.assertIn("メモ2", texts)
+
+class UpdateMemoTests(TestCase):
+    def setUp(self):
+        # テスト用のAPIクライアントとテストデータを作成
+        self.client = APIClient()
+        self.memo = Memo.objects.create(text="元のメモ")
+        self.url = reverse("memo-detail", kwargs={"pk": self.memo.id})
+
+    def test_update_memo(self):
+        # 有効なデータを送信するとメモが作成されるかをテストする
+        updated_data = {'text': '更新テスト'}
+        response = self.client.put(self.url, updated_data, format='json')
+        # ステータスコードが201 Createdであることを確認
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # データベースの値が更新されたか確認
+        self.memo.refresh_from_db()
+        self.assertEqual(self.memo.text, updated_data["text"])
+
+    def test_update_memo_not_found(self):
+        # 存在しないメモを更新しようとすると404 Not Foundを返す
+        url = reverse("memo-detail", kwargs={"pk": 9999}) # 存在しないID
+        update_data = {"text": "存在しないメモ"}
+        response = self.client.put(url, update_data, format="json")
+        # ステータスコードが404 Not Foundであることを確認
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_empty_memo(self):
+        data = {'text': ''}
+        response = self.client.put(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # エラーメッセージが含まれていることを確認
+        self.assertIn("text", response.data)
+        self.assertIsNotNone(response.data["text"]) # エラーメッセージが含まれていること
+
+
