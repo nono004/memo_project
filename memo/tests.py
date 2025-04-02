@@ -87,6 +87,9 @@ class GetMemoTests(TestCase):
 
     def test_include_data(self):
         response = self.client.get(self.url)
+        for memo in response.data:
+            self.assertIn("text", memo) # textフィールドが存在するか
+            self.assertIn("created_at", memo)
         texts = [memo["text"] for memo in response.data]
         self.assertIn("メモ1", texts)
         self.assertIn("メモ2", texts)
